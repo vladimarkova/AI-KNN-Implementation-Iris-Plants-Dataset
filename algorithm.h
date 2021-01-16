@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cmath>
+#include <vector>
 using namespace std;
 
 const int ALL_ENTRIES_NUMBER = 150;
@@ -20,6 +21,25 @@ struct Entry {
     double features[ATTRIBUTES_NUMBER];
     char class_type;
 
+    double calculate_distance_with(const Entry& other) const {
+        double s_sum = 0;
+        for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
+            double s_diff = (features[i] - other.features[i]) * (features[i] - other.features[i]);
+            s_sum += s_diff;
+        }
+        double distance = sqrt(s_sum);
+        return distance;
+    }
+
+    bool same_with(const Entry& other) const {
+        for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
+            if (features[i] != other.features[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     friend ostream& operator<<(ostream& os, const Entry& entry) {
         for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
             printf("%.1f", entry.features[i]);
@@ -30,6 +50,14 @@ struct Entry {
         return os;
     }
 };
+
+Entry test_entry;
+
+bool compare_entries(const Entry& entry1, const Entry& entry2) {
+    double distance1 = entry1.calculate_distance_with(test_entry);
+    double distance2 = entry2.calculate_distance_with(test_entry);
+    return distance1 <= distance2;
+}
 
 struct Dataset {
     Entry entries[ALL_ENTRIES_NUMBER];
@@ -189,6 +217,23 @@ void isolated_tests() {
     training_dataset.print();
     cout << "NOW PRINTING TEST DATASET: " << endl << endl;
     test_dataset.print();
+
+    test_entry = test_dataset.entries[0];
+    int dataset_size = training_dataset.size;
+
+    sort(training_dataset.entries, training_dataset.entries + dataset_size, compare_entries);
+
+    cout << "NOW PRINTING SORTED TRAINING DATASET: " << endl << endl;
+
+    training_dataset.print();
+}
+
+char classify_single_entry(const Entry& entry, const Dataset& training_dataset, int K) {
+    test_entry = entry;
+    int training_dataset_size = training_dataset.size;
+    sort(training_dataset.entries, training_dataset.entries + training_dataset_size, compare_entries);
+
+    return 'u';
 }
 
 void KNN() {
