@@ -149,6 +149,20 @@ void arrange_into_datasets(Entry all_entries[], Dataset set_of_datasets[]) {
     }
 }
 
+Dataset unite_all_datasets_except(int idx_of_the_test_dataset, Dataset set_of_datasets[]) {
+    Dataset training_dataset;
+
+    for (int i = 0; i < DATASETS_NUMBER; i++) {
+        if (i != idx_of_the_test_dataset) {
+            for (int j = 0; j < set_of_datasets[i].size; j++) {
+                training_dataset.add(set_of_datasets[i].entries[j]);
+            }
+        }
+    }
+
+    return training_dataset;
+}
+
 void print_set_of_datasets(const Dataset set_of_datasets[], int datasets_number) {
     for (int i = 0; i < datasets_number; i++) {
         cout << "DATASET " << i << ": " << endl << endl;
@@ -166,7 +180,15 @@ void isolated_tests() {
 
     Dataset set_of_datasets[DATASETS_NUMBER];
     arrange_into_datasets(all_entries, set_of_datasets);
-    print_set_of_datasets(set_of_datasets, DATASETS_NUMBER);
+    // print_set_of_datasets(set_of_datasets, DATASETS_NUMBER);
+    int index_of_the_testDtset = 0;
+    choice_of_test_set(index_of_the_testDtset);
+    Dataset training_dataset = unite_all_datasets_except(index_of_the_testDtset, set_of_datasets);
+    Dataset test_dataset = set_of_datasets[index_of_the_testDtset];
+    cout << "NOW PRINTING TRAINING DATASET: " << endl << endl;
+    training_dataset.print();
+    cout << "NOW PRINTING TEST DATASET: " << endl << endl;
+    test_dataset.print();
 }
 
 void KNN() {
@@ -179,20 +201,18 @@ void KNN() {
     char response = '1';
 
     Entry all_entries[ALL_ENTRIES_NUMBER];
-    Dataset test_dataset;
-    Dataset training_dataset;
     Dataset set_of_datasets[DATASETS_NUMBER];
 
     choice_of_K(K);
 
     read_data(all_entries);
-    // arrange_into_datasets(all_entries, set_of_datasets);
+    arrange_into_datasets(all_entries, set_of_datasets);
 
     while (number_of_learnings_counter < NUMBER_OF_CLASSIFICATIONS && response != '0') {
         choice_of_test_set(index_of_the_testDtset);
 
-        // unite_all_datasets_except_test_into_training(index_of_the_testDtset, training_dataset, set_of_datasets);
-        test_dataset = set_of_datasets[index_of_the_testDtset];
+        Dataset training_dataset = unite_all_datasets_except(index_of_the_testDtset, set_of_datasets);
+        Dataset test_dataset = set_of_datasets[index_of_the_testDtset];
         
         char classes_of_entries[TEST_DATASET_SIZE + 1] = { '\0' };
         // classify_test_dataset(test_dataset, classes_of_entries);
