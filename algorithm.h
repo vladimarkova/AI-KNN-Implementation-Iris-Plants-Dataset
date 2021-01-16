@@ -11,8 +11,12 @@ void read_data() {
 
 }
 
-void classify_entry() {
+enum DatasetType {
+    Iris_Setosa, Iris_Versisolor, Iris_Virginica
+};
 
+DatasetType classify_single_entry() {
+    
 }
 
 void print_result_of_single_entry_classification() {
