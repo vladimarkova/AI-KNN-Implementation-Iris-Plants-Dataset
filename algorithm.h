@@ -1,38 +1,57 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
-#include "Vector.h"
+#include <ctime>
+#include <cstdlib>
+#include <algorithm>
+#include <cmath>
 using namespace std;
 
 const int ALL_ENTRIES_NUMBER = 150;
-const int TEST_DATASET_SIZE = 20;
-const int TRAIN_DATASET_SIZE = ALL_ENTRIES_NUMBER - TEST_DATASET_SIZE;
+const int DATASETS_NUMBER = 10;
+const int NUMBER_OF_CLASSIFICATIONS = DATASETS_NUMBER;
+const int TEST_DATASET_SIZE = ALL_ENTRIES_NUMBER / DATASETS_NUMBER;
+const int TRAINING_DATASET_SIZE = ALL_ENTRIES_NUMBER - TEST_DATASET_SIZE;
 const int ATTRIBUTES_NUMBER = 4; // not including the class attribute
 const int NUMBER_OF_CLASSES = 3; 
-
-enum DatasetType {
-    Iris_Setosa, Iris_Versisolor, Iris_Virginica
-};
+const int DEFFAULT_VALUE_OF_K = sqrt(ALL_ENTRIES_NUMBER); 
 
 struct Entry {
-    Vector<double> features;
+    double features[ATTRIBUTES_NUMBER];
     char class_type;
 
     friend ostream& operator<<(ostream& os, const Entry& entry) {
-        // entry.features.print();
-        for (int i = 0; i < entry.features.size(); i++) {
+        for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
             printf("%.1f", entry.features[i]);
             cout << " ";
         }
-        os << entry.class_type << endl << endl;
+        os << entry.class_type << endl;
 
         return os;
     }
 };
 
-void read_data(Vector<Entry>& all_entries) {
+struct Dataset {
+    Entry entries[ALL_ENTRIES_NUMBER];
+    int size = 0;
 
+    void add(const Entry& entry) {
+        entries[size] = entry;
+        size++;
+    }
+
+    void print() const {
+        cout << "NUMBER OF ENTRIES: " << size << endl;
+        for (int i = 0; i < size; i++) {
+            cout << entries[i];
+        }
+        cout << endl << endl;
+    } 
+};
+
+void read_data(Entry all_entries[]) {
     ifstream infile("iris.txt");
+    int number_of_entries = 0;
 
     if (infile.is_open())
     {
@@ -40,9 +59,9 @@ void read_data(Vector<Entry>& all_entries) {
         while (getline(infile, line))
         {
             Entry entry;
-            Vector<double> numbers;
+            double numbers[ATTRIBUTES_NUMBER];
             for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
-                numbers.push_back(0);
+                numbers[i] = 0;
             }
             
             int power = 1;
@@ -86,31 +105,120 @@ void read_data(Vector<Entry>& all_entries) {
             }
 
             for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
-                entry.features.push_back(numbers[i] / double(10));
+                entry.features[i] = (numbers[i] / double(10));
             }
             entry.class_type = line[16];
-            cout << entry;
-            all_entries.push_back(entry);
+            all_entries[number_of_entries] = entry;
+            number_of_entries++;
         }
     }
     infile.close();
 }
 
-char classify_single_entry() {
-    return 'S';
+void choice_of_test_set(int& index_of_the_testDtset) {
+    cout << "Enter a number of the test set (a number from 0 to 9, incl.): " << endl
+         << endl;
+    cin >> index_of_the_testDtset;
+    while (index_of_the_testDtset < 0 || index_of_the_testDtset > 9)
+    {
+        cout << "Enter a number from 0 to 9, incl." << endl
+             << endl;
+        cin >> index_of_the_testDtset;
+    }
+    cout << endl
+         << endl;
 }
 
-void print_result_of_single_entry_classification() {
-    
+void choice_of_K(int& K) {
+    cout << "Enter number of nearest neighbours for the algorithm to work with(K): " << endl << endl;
+    cin >> K;
+    while (K <= 0) {
+        cout << "Enter a number greater than zero: " << endl;
+        cin >> K;
+    }
+    cout << endl;
+}
+
+void arrange_into_datasets(Entry all_entries[], Dataset set_of_datasets[]) {
+    random_shuffle(all_entries, all_entries + ALL_ENTRIES_NUMBER);
+
+    for (int i = 0; i < DATASETS_NUMBER; i++) {
+        for (int j = 0; j < TEST_DATASET_SIZE; j++) {
+            set_of_datasets[i].add(all_entries[i * TEST_DATASET_SIZE + j]);
+        }
+    }
+}
+
+void print_set_of_datasets(const Dataset set_of_datasets[], int datasets_number) {
+    for (int i = 0; i < datasets_number; i++) {
+        cout << "DATASET " << i << ": " << endl << endl;
+        set_of_datasets[i].print();
+    }
 }
 
 void isolated_tests() {
-    Vector<Entry> all_entries;
-    read_data(all_entries); 
-    // all_entries.print();
+    int K = DEFFAULT_VALUE_OF_K;
+
+    choice_of_K(K);
+
+    Entry all_entries[ALL_ENTRIES_NUMBER];
+    read_data(all_entries);
+
+    Dataset set_of_datasets[DATASETS_NUMBER];
+    arrange_into_datasets(all_entries, set_of_datasets);
+    print_set_of_datasets(set_of_datasets, DATASETS_NUMBER);
 }
 
 void KNN() {
+    int index_of_the_testDtset = 0;
+    int number_of_learnings_counter = 0;
+    int K = DEFFAULT_VALUE_OF_K;
+    int accuracy_index = number_of_learnings_counter;
+    double accuracies[DATASETS_NUMBER];
+    double average_accuracy = 0;
+    char response = '1';
 
+    Entry all_entries[ALL_ENTRIES_NUMBER];
+    Dataset test_dataset;
+    Dataset training_dataset;
+    Dataset set_of_datasets[DATASETS_NUMBER];
+
+    choice_of_K(K);
+
+    read_data(all_entries);
+    // arrange_into_datasets(all_entries, set_of_datasets);
+
+    while (number_of_learnings_counter < NUMBER_OF_CLASSIFICATIONS && response != '0') {
+        choice_of_test_set(index_of_the_testDtset);
+
+        // unite_all_datasets_except_test_into_training(index_of_the_testDtset, training_dataset, set_of_datasets);
+        test_dataset = set_of_datasets[index_of_the_testDtset];
+        
+        char classes_of_entries[TEST_DATASET_SIZE + 1] = { '\0' };
+        // classify_test_dataset(test_dataset, classes_of_entries);
+
+        cout << "CURRENT TEST WITH DATASET " << index_of_the_testDtset << " AND K = " << K << endl;
+        // print_classification(classes_of_entries);
+
+        // accuracies[accuracy_index] = calculate_singleTest_accuracy(classes_of_entries, test_dataset);
+        cout << "ACCURACY FOR TEST WITH DATASET " << index_of_the_testDtset << ": " << accuracies[accuracy_index] * 100 << '%' << endl << endl;
+        accuracy_index++;
+
+        number_of_learnings_counter++;
+
+        cout << endl << endl;
+
+        if (number_of_learnings_counter != NUMBER_OF_CLASSIFICATIONS) {
+            cout << "Enter 1 to start a new classification or 0 to stop: " << endl;
+            cin >> response;
+        }
+    }
+
+    for (int i = 0; i < DATASETS_NUMBER; i++) {
+        average_accuracy += accuracies[i];
+    }
+    average_accuracy /= number_of_learnings_counter;
+
+    cout << "IN GENERAL: " << number_of_learnings_counter << " CLASSIFICATIONS MADE." << " K = " << K << endl;
+    cout << "THE AVERAGE ACCURACY IS: " << average_accuracy * 100 << '%' << endl << endl;
 }
-
