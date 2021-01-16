@@ -48,6 +48,5 @@ public:
         for (int i = 0; i < arr_size; i++) {
             cout << arr[i] << " ";
         }
-        cout << endl;
     }
 };
