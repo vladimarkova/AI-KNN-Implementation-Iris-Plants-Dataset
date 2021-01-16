@@ -247,7 +247,7 @@ int count_class_in_a_dataset_with_size_K(char class_type, const Dataset& dataset
     return count;
 }
 
-char classify_single_entry(const Entry& entry, const Dataset& training_dataset, int K) {
+char classify_single_entry(const Entry& entry, Dataset& training_dataset, int K) {
     test_entry = entry; // very important row, actually defines the result from sort of the training set
     int training_dataset_size = training_dataset.size;
     sort(training_dataset.entries, training_dataset.entries + training_dataset_size, compare_entries);
@@ -348,7 +348,7 @@ char classify_single_entry(const Entry& entry, const Dataset& training_dataset, 
     return 'u';
 }
 
-void classify_test_dataset(const Dataset& test_dataset, const Dataset& training_dataset, int K, char classes_of_entries[]) {
+void classify_test_dataset(const Dataset& test_dataset, Dataset& training_dataset, int K, char classes_of_entries[]) {
     for (int i = 0; i < test_dataset.size; i++) {
         char entry_class = classify_single_entry(test_dataset.entries[i], training_dataset, K);
         classes_of_entries[i] = entry_class;
