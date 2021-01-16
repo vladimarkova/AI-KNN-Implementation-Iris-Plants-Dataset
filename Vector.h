@@ -1,4 +1,8 @@
 #include <iostream>
+#include <ctime>
+#include <cstdlib>
+#include <algorithm>
+#include <cmath>
 using namespace std;
 
 const int MAX_ELEMENTS = 500;
@@ -34,5 +38,16 @@ public:
 
     int size() const {
         return arr_size;
+    }
+
+    void my_random_shuffle() {
+        random_shuffle(arr, arr + arr_size);
+    }
+
+    void print() const {
+        for (int i = 0; i < arr_size; i++) {
+            cout << arr[i] << " ";
+        }
+        cout << endl;
     }
 };

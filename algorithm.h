@@ -1,9 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <ctime>
-#include <cstdlib>
-#include <algorithm>
-#include <cmath>
+#include "Vector.h"
 using namespace std;
 
 
@@ -16,7 +13,8 @@ enum DatasetType {
 };
 
 DatasetType classify_single_entry() {
-    
+    return Iris_Setosa;
+
 }
 
 void print_result_of_single_entry_classification() {

@@ -5,7 +5,7 @@ using namespace std;
 int main() {
     srand(time(0)); 
 
-    test();
+    // test();
 
     return 0;
 }
