@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 #include <vector>
 using namespace std;
 
@@ -16,6 +17,7 @@ const int TRAINING_DATASET_SIZE = ALL_ENTRIES_NUMBER - TEST_DATASET_SIZE;
 const int ATTRIBUTES_NUMBER = 4; // not including the class attribute
 const int NUMBER_OF_CLASSES = 3; 
 const int DEFFAULT_VALUE_OF_K = sqrt(ALL_ENTRIES_NUMBER); 
+const int INF = 1000000;
 
 struct Entry {
     double features[ATTRIBUTES_NUMBER];
@@ -38,6 +40,13 @@ struct Entry {
             }
         }
         return true;
+    }
+
+    void print_without_class() const {
+        for (int i = 0; i < ATTRIBUTES_NUMBER; i++) {
+            printf("%.1f", features[i]);
+            cout << " ";
+        }
     }
 
     friend ostream& operator<<(ostream& os, const Entry& entry) {
@@ -198,6 +207,166 @@ void print_set_of_datasets(const Dataset set_of_datasets[], int datasets_number)
     }
 }
 
+void print_classification(const Dataset& test_dataset, char classes_of_entries[]) {
+    for (int i = 0; i < test_dataset.size; i++) {
+        if (i <= 9) {
+            cout << "ENTRY " << i << ":  ";
+        } 
+        else {
+            cout << "ENTRY " << i << ": ";
+        }
+
+        test_dataset.entries[i].print_without_class();
+
+        char class_t[30];
+
+        if (classes_of_entries[i] == 'S') {
+            strcpy(class_t, "Iris_Setosa");
+        }
+
+        if (classes_of_entries[i] == 'C') {
+            strcpy(class_t, "Iris_Versicolor");
+        }
+
+        if (classes_of_entries[i] == 'V') {
+            strcpy(class_t, "Iris_Virginica");
+        }
+
+        cout << "CLASSIFIED AS: " << class_t << endl;
+    }
+    cout << endl;
+}
+
+int count_class_in_a_dataset_with_size_K(char class_type, const Dataset& dataset, int K) {
+    int count = 0;
+    for (int i = 0; i < K; i++) {
+        if (dataset.entries[i].class_type == class_type) {
+            count++;
+        }
+    }
+    return count;
+}
+
+char classify_single_entry(const Entry& entry, const Dataset& training_dataset, int K) {
+    test_entry = entry; // very important row, actually defines the result from sort of the training set
+    int training_dataset_size = training_dataset.size;
+    sort(training_dataset.entries, training_dataset.entries + training_dataset_size, compare_entries);
+
+    int class_S_number = count_class_in_a_dataset_with_size_K('S', training_dataset, K);
+    int class_C_number = count_class_in_a_dataset_with_size_K('C', training_dataset, K);
+    int class_V_number = count_class_in_a_dataset_with_size_K('V', training_dataset, K);
+
+    if (class_S_number == class_C_number && class_S_number > class_V_number) {
+        double class_S_best_distance = 0;
+        double class_C_best_distance = 0;
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'S') {
+                class_S_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'C') {
+                class_C_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        if (class_S_best_distance < class_C_best_distance) {
+            return 'S';
+        } 
+        else {
+            return 'C';
+        }
+    }
+
+    if (class_C_number == class_V_number && class_C_number > class_S_number) {
+        double class_C_best_distance = 0;
+        double class_V_best_distance = 0;
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'C') {
+                class_C_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'V') {
+                class_V_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        if (class_C_best_distance < class_V_best_distance) {
+            return 'C';
+        } 
+        else {
+            return 'V';
+        }
+    }
+
+    if (class_S_number == class_V_number && class_S_number > class_C_number) {
+        double class_S_best_distance = 0;
+        double class_V_best_distance = 0;
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'S') {
+                class_S_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        for (int i = 0; i < K; i++) {
+            if (training_dataset.entries[i].class_type == 'V') {
+                class_V_best_distance = training_dataset.entries[i].calculate_distance_with(test_entry);
+                break;
+            }
+        }
+        if (class_S_best_distance < class_V_best_distance) {
+            return 'S';
+        } 
+        else {
+            return 'V';
+        }
+    }
+
+    int max_number = -INF;
+    char best_class_type;
+
+    if (class_S_number > max_number) {
+        max_number = class_S_number;
+        best_class_type = 'S';
+    }
+
+    if (class_C_number > max_number) {
+        max_number = class_C_number;
+        best_class_type = 'C';
+    }
+
+    if (class_V_number > max_number) {
+        max_number = class_V_number;
+        best_class_type = 'V';
+    }
+
+    return best_class_type;
+    
+    return 'u';
+}
+
+void classify_test_dataset(const Dataset& test_dataset, const Dataset& training_dataset, int K, char classes_of_entries[]) {
+    for (int i = 0; i < test_dataset.size; i++) {
+        char entry_class = classify_single_entry(test_dataset.entries[i], training_dataset, K);
+        classes_of_entries[i] = entry_class;
+    }
+}
+
+double calculate_single_test_accuracy(char classes_of_entries[], const Dataset& test_dataset) {
+    double properly_classified = 0;
+
+    for (int i = 0; i < test_dataset.size; i++) {
+        if (test_dataset.entries[i].class_type == classes_of_entries[i]) {
+            properly_classified++;
+        }
+    }
+
+    return properly_classified / test_dataset.size;
+}
+
 void isolated_tests() {
     int K = DEFFAULT_VALUE_OF_K;
 
@@ -221,26 +390,20 @@ void isolated_tests() {
     test_entry = test_dataset.entries[0];
     int dataset_size = training_dataset.size;
 
-    sort(training_dataset.entries, training_dataset.entries + dataset_size, compare_entries);
+    // sort(training_dataset.entries, training_dataset.entries + dataset_size, compare_entries);
 
     cout << "NOW PRINTING SORTED TRAINING DATASET: " << endl << endl;
 
     training_dataset.print();
-}
 
-char classify_single_entry(const Entry& entry, const Dataset& training_dataset, int K) {
-    test_entry = entry;
-    int training_dataset_size = training_dataset.size;
-    sort(training_dataset.entries, training_dataset.entries + training_dataset_size, compare_entries);
-
-    return 'u';
+    // cout << "CLASSIFICTAION RESULT: " << classify_single_entry(test_dataset.entries[0], training_dataset, 12);
 }
 
 void KNN() {
     int index_of_the_testDtset = 0;
-    int number_of_learnings_counter = 0;
+    int number_of_classifications_counter = 0;
     int K = DEFFAULT_VALUE_OF_K;
-    int accuracy_index = number_of_learnings_counter;
+    int accuracy_index = number_of_classifications_counter;
     double accuracies[DATASETS_NUMBER];
     double average_accuracy = 0;
     char response = '1';
@@ -253,27 +416,27 @@ void KNN() {
     read_data(all_entries);
     arrange_into_datasets(all_entries, set_of_datasets);
 
-    while (number_of_learnings_counter < NUMBER_OF_CLASSIFICATIONS && response != '0') {
+    while (number_of_classifications_counter < NUMBER_OF_CLASSIFICATIONS && response != '0') {
         choice_of_test_set(index_of_the_testDtset);
 
         Dataset training_dataset = unite_all_datasets_except(index_of_the_testDtset, set_of_datasets);
         Dataset test_dataset = set_of_datasets[index_of_the_testDtset];
         
         char classes_of_entries[TEST_DATASET_SIZE + 1] = { '\0' };
-        // classify_test_dataset(test_dataset, classes_of_entries);
+        classify_test_dataset(test_dataset, training_dataset, K, classes_of_entries);
 
         cout << "CURRENT TEST WITH DATASET " << index_of_the_testDtset << " AND K = " << K << endl;
-        // print_classification(classes_of_entries);
+        print_classification(test_dataset, classes_of_entries);
 
-        // accuracies[accuracy_index] = calculate_singleTest_accuracy(classes_of_entries, test_dataset);
+        accuracies[accuracy_index] = calculate_single_test_accuracy(classes_of_entries, test_dataset);
         cout << "ACCURACY FOR TEST WITH DATASET " << index_of_the_testDtset << ": " << accuracies[accuracy_index] * 100 << '%' << endl << endl;
         accuracy_index++;
 
-        number_of_learnings_counter++;
+        number_of_classifications_counter++;
 
         cout << endl << endl;
 
-        if (number_of_learnings_counter != NUMBER_OF_CLASSIFICATIONS) {
+        if (number_of_classifications_counter != NUMBER_OF_CLASSIFICATIONS) {
             cout << "Enter 1 to start a new classification or 0 to stop: " << endl;
             cin >> response;
         }
@@ -282,8 +445,8 @@ void KNN() {
     for (int i = 0; i < DATASETS_NUMBER; i++) {
         average_accuracy += accuracies[i];
     }
-    average_accuracy /= number_of_learnings_counter;
+    average_accuracy /= number_of_classifications_counter;
 
-    cout << "IN GENERAL: " << number_of_learnings_counter << " CLASSIFICATIONS MADE." << " K = " << K << endl;
+    cout << "IN GENERAL: " << number_of_classifications_counter << " CLASSIFICATIONS MADE." << " K = " << K << endl;
     cout << "THE AVERAGE ACCURACY IS: " << average_accuracy * 100 << '%' << endl << endl;
 }
